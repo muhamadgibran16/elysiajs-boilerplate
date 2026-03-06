@@ -1,14 +1,29 @@
 {
   "name": "elysiajs-boilerplate",
   "version": "1.0.50",
+  "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "bun run --watch src/index.ts"
+    "dev": "bun run --watch src/index.ts",
+    "db:generate": "bunx --bun prisma generate",
+    "db:push": "bunx --bun prisma db push",
+    "db:migrate": "bunx --bun prisma migrate dev --name init",
+    "db:studio": "bunx --bun prisma studio"
   },
   "dependencies": {
-    "elysia": "latest"
+    "@elysiajs/cors": "^1.4.1",
+    "@elysiajs/jwt": "^1.4.1",
+    "@elysiajs/swagger": "^1.3.1",
+    "@prisma/adapter-pg": "^7.4.2",
+    "@prisma/client": "^7.4.2",
+    "dotenv": "^17.3.1",
+    "elysia": "latest",
+    "elysia-rate-limit": "^4.5.0",
+    "pg": "^8.20.0",
+    "prisma": "^7.4.2"
   },
   "devDependencies": {
+    "@types/pg": "^8.18.0",
     "bun-types": "latest"
   },
   "module": "src/index.js"
