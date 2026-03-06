@@ -1,9 +1,17 @@
-# Elysia with Bun runtime
+# ElysiaJS Boilerplate
 
 ## Getting Started
 To get started with this template, simply paste this command into your terminal:
 ```bash
-bun create elysia ./elysia-example
+git clone https://github.com/muhamadgibran16/elysiajs-boilerplate.git
+```
+
+```bash
+cd elysiajs-boilerplate
+```
+
+```bash
+bun install
 ```
 
 ## Development
