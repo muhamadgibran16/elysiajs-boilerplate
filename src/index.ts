@@ -49,8 +49,10 @@ const app = new Elysia()
   .get("/", () => Bun.file("src/views/index.html"))
 
   // 3. Application Routes
-  .use(authRoutes)
-  .use(userRoutes)
+  .group("/api", (api) => api
+    .use(authRoutes)
+    .use(userRoutes)
+  )
 
   .listen(ENV.PORT);
 
