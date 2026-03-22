@@ -1,6 +1,7 @@
 import { Elysia } from 'elysia';
 import { cors } from '@elysiajs/cors';
 import { rateLimit } from 'elysia-rate-limit';
+import { requestGuardPlugin } from './request-guard';
 
 export const securityPlugin = new Elysia({ name: 'security-plugin' })
     // 1. CORS Configuration
@@ -23,7 +24,10 @@ export const securityPlugin = new Elysia({ name: 'security-plugin' })
         })
     )
 
-    // 3. Security Headers (Helmet-like)
+    // 3. Request Anomaly Detection (SQL Injection, XSS, Path Traversal, etc.)
+    .use(requestGuardPlugin)
+
+    // 4. Security Headers (Helmet-like)
     .onRequest(({ set }) => {
         // Prevents the browser from doing MIME-type sniffing
         set.headers['X-Content-Type-Options'] = 'nosniff';
@@ -43,3 +47,4 @@ export const securityPlugin = new Elysia({ name: 'security-plugin' })
         // Content Security Policy
         set.headers['Content-Security-Policy'] = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self'; frame-src 'none'; object-src 'none';";
     });
+
