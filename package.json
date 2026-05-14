@@ -2,6 +2,7 @@
   "name": "elysiajs-boilerplate",
   "version": "1.0.50",
   "type": "module",
+  "author": "muhamadgibran16 <muhamadgibran2333@gmail.com>",
   "scripts": {
     "start": "bun src/index.ts",
     "dev": "bun run --watch src/index.ts",
