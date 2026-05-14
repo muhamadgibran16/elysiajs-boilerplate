@@ -4,6 +4,7 @@ import { securityPlugin } from "./plugins/security";
 import { authRoutes } from "./modules/auth";
 import { userRoutes } from "./modules/users";
 import { errorResponse } from "./lib/response";
+import { AppError } from "./lib/app-error";
 import { ENV } from "./config/env-loader";
 
 const app = new Elysia()
@@ -32,17 +33,29 @@ const app = new Elysia()
 
   // Global Error Handler
   .onError(({ code, error, set }) => {
-    if (code === 'VALIDATION') {
-      set.status = 400;
-      return errorResponse('Validation Error', (error as any).all ?? (error as any).message);
+    if (error instanceof AppError) {
+      set.status = error.statusCode;
+      return errorResponse(error.message, error.errors);
     }
+
+    if (code === 'VALIDATION') {
+      set.status = 422;
+      return errorResponse('Validation Error', error.all ?? error.message);
+    }
+
     if (code === 'NOT_FOUND') {
       set.status = 404;
       return errorResponse('Route Not Found');
     }
 
-    set.status = typeof set.status === 'number' && set.status !== 200 ? set.status : 500;
-    return errorResponse((error as any).message || 'Internal Server Error');
+    if (code === 'PARSE') {
+      set.status = 400;
+      return errorResponse('Malformed request payload');
+    }
+
+    set.status = typeof set.status === 'number' && set.status >= 400 ? set.status : 500;
+    const message = error instanceof Error ? error.message : 'Internal Server Error';
+    return errorResponse(message);
   })
 
   // 2. Base Routes

@@ -1,14 +1,21 @@
-import { UsersRepository } from './users.repository';
-import { metaPagination } from '../../lib/response';
+import { UsersRepository, type PublicUser, type ListUser } from './users.repository';
+import { metaPagination, type MetaPagination } from '../../lib/response';
+import { NotFoundError, ConflictError } from '../../lib/app-error';
+import type { UpdateUserBody } from './users.model';
+
+export interface PaginatedUsers {
+    users: ListUser[];
+    meta: MetaPagination;
+}
 
 export class UsersService {
-    constructor(private usersRepository: UsersRepository) { }
+    constructor(private usersRepository: UsersRepository) {}
 
-    async getPaginatedUsers(page: number, limit: number) {
+    async getPaginatedUsers(page: number, limit: number): Promise<PaginatedUsers> {
         const skip = (page - 1) * limit;
         const [users, total] = await Promise.all([
             this.usersRepository.findMany(skip, limit),
-            this.usersRepository.count()
+            this.usersRepository.count(),
         ]);
 
         const meta = metaPagination(page, limit, users.length, total);
@@ -16,42 +23,42 @@ export class UsersService {
         return { users, meta };
     }
 
-    async getUserById(id: string) {
-        return this.usersRepository.findById(id);
+    async getUserById(id: string): Promise<PublicUser> {
+        const user = await this.usersRepository.findById(id);
+        if (!user) {
+            throw new NotFoundError('User not found');
+        }
+        return user;
     }
 
-    async updateUser(id: string, body: any) {
+    async updateUser(id: string, body: UpdateUserBody): Promise<PublicUser> {
         const existingUser = await this.usersRepository.findById(id);
         if (!existingUser) {
-            return { error: 'USER_NOT_FOUND', user: null };
+            throw new NotFoundError('User not found');
         }
 
         const { email, name, role } = body;
 
-        // Check unique email
         if (email && email !== existingUser.email) {
             const emailTaken = await this.usersRepository.findByEmail(email);
             if (emailTaken) {
-                return { error: 'EMAIL_ALREADY_IN_USE', user: null };
+                throw new ConflictError('Email is already in use');
             }
         }
 
-        const updatedUser = await this.usersRepository.update(id, {
+        return this.usersRepository.update(id, {
             email: email ?? existingUser.email,
             name: name ?? existingUser.name,
             role: role ?? existingUser.role,
         });
-
-        return { error: null, user: updatedUser };
     }
 
-    async deleteUser(id: string) {
+    async deleteUser(id: string): Promise<void> {
         const existingUser = await this.usersRepository.findById(id);
         if (!existingUser) {
-            return false;
+            throw new NotFoundError('User not found');
         }
 
         await this.usersRepository.delete(id);
-        return true;
     }
 }

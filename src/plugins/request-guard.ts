@@ -178,7 +178,9 @@ function scanObject(
 
 // ─── Helper ───────────────────────────────────────────────────────────────────
 
-function blocked(set: any, message: string) {
+type ResponseSet = { status?: number | string };
+
+function blocked(set: ResponseSet, message: string) {
 	set.status = 403;
 	return {
 		success: false,

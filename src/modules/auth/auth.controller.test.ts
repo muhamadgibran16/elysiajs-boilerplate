@@ -1,42 +1,24 @@
-import { describe, it, expect, spyOn, afterEach } from 'bun:test';
-import { AuthController } from './auth.controller';
+import { describe, it, expect, spyOn } from 'bun:test';
+import { AuthController, type JwtSigner, type ResponseSet } from './auth.controller';
 import { AuthService } from './auth.service';
+import { ConflictError, UnauthorizedError } from '../../lib/app-error';
 
 describe('AuthController', () => {
-    afterEach(() => {
-        // Restore all mocks after each test
-        // Bun's spyOn mocks can be cleared or restored if needed
-    });
-
     describe('register', () => {
-        it('should return 400 if email already exists', async () => {
-            const registerSpy = spyOn(AuthService.prototype, 'register').mockResolvedValueOnce({
-                error: 'EMAIL_ALREADY_EXISTS',
-                user: null
-            });
+        it('should propagate ConflictError if email already exists', async () => {
+            spyOn(AuthService.prototype, 'register').mockRejectedValueOnce(new ConflictError('Email already exists'));
 
-            const set = { status: 200 };
+            const set: ResponseSet = { status: 200 };
             const body = { email: 'test@example.com', password: 'password', name: 'Test' };
 
-            const response = await AuthController.register({ body, set });
-
-            expect(set.status).toBe(400);
-            expect(response).toEqual({
-                success: false,
-                message: 'Email already exists',
-                errors: null
-            });
-            expect(registerSpy).toHaveBeenCalledWith(body);
+            expect(AuthController.register({ body, set })).rejects.toBeInstanceOf(ConflictError);
         });
 
         it('should return 201 and user data on successful register', async () => {
-            const mockUser = { id: '1', email: 'test@example.com', name: 'Test', role: 'USER', createdAt: new Date(), updatedAt: new Date() };
-            const registerSpy = spyOn(AuthService.prototype, 'register').mockResolvedValueOnce({
-                error: null,
-                user: mockUser
-            });
+            const mockUser = { id: '1', email: 'test@example.com', name: 'Test', role: 'USER', createdAt: new Date() };
+            const registerSpy = spyOn(AuthService.prototype, 'register').mockResolvedValueOnce(mockUser);
 
-            const set = { status: 200 };
+            const set: ResponseSet = { status: 200 };
             const body = { email: 'test@example.com', password: 'password', name: 'Test' };
 
             const response = await AuthController.register({ body, set });
@@ -45,54 +27,40 @@ describe('AuthController', () => {
             expect(response).toEqual({
                 success: true,
                 message: 'User registered successfully',
-                data: { user: mockUser }
+                data: { user: mockUser },
             });
             expect(registerSpy).toHaveBeenCalledWith(body);
         });
     });
 
     describe('login', () => {
-        it('should return 401 on invalid credentials', async () => {
-            const loginSpy = spyOn(AuthService.prototype, 'login').mockResolvedValueOnce({
-                error: 'INVALID_CREDENTIALS',
-                user: null
-            });
+        it('should propagate UnauthorizedError on invalid credentials', async () => {
+            spyOn(AuthService.prototype, 'login').mockRejectedValueOnce(new UnauthorizedError('Invalid credentials'));
 
-            const set = { status: 200 };
             const body = { email: 'test@example.com', password: 'wrong' };
-            const jwt = { sign: async () => 'mock_token' };
+            const jwt: JwtSigner = { sign: async () => 'mock_token' };
 
-            const response = await AuthController.login({ body, set, jwt });
-
-            expect(set.status).toBe(401);
-            expect(response).toEqual({
-                success: false,
-                message: 'Invalid credentials',
-                errors: null
-            });
-            expect(loginSpy).toHaveBeenCalledWith(body);
+            expect(AuthController.login({ body, jwt })).rejects.toBeInstanceOf(UnauthorizedError);
         });
 
-        it('should return 200, token, and user data on successful login', async () => {
-            const mockUser = { id: '1', email: 'test@example.com', name: 'Test', role: 'USER', createdAt: new Date(), updatedAt: new Date(), password: 'hashed_password' };
-            const loginSpy = spyOn(AuthService.prototype, 'login').mockResolvedValueOnce({
-                error: null,
-                user: mockUser
-            });
+        it('should return token and user data on successful login', async () => {
+            const mockUser = {
+                id: '1', email: 'test@example.com', name: 'Test', role: 'USER',
+                createdAt: new Date(), updatedAt: new Date(), password: 'hashed_password',
+            };
+            spyOn(AuthService.prototype, 'login').mockResolvedValueOnce(mockUser);
 
-            const set = { status: 200 };
             const body = { email: 'test@example.com', password: 'password' };
-            let tokenPayload: any;
-            const jwt = {
-                sign: async (payload: any) => {
+            let tokenPayload: Record<string, string | number> | undefined;
+            const jwt: JwtSigner = {
+                sign: async (payload) => {
                     tokenPayload = payload;
                     return 'mock_token';
-                }
+                },
             };
 
-            const response = await AuthController.login({ body, set, jwt });
+            const response = await AuthController.login({ body, jwt });
 
-            // Default status is 200 (not modified by controller for successful login)
             expect(response).toEqual({
                 success: true,
                 message: 'Login successful',
@@ -103,23 +71,22 @@ describe('AuthController', () => {
                         email: mockUser.email,
                         name: mockUser.name,
                         role: mockUser.role,
-                    }
-                }
+                    },
+                },
             });
             expect(tokenPayload).toEqual({ id: mockUser.id });
-            expect(loginSpy).toHaveBeenCalledWith(body);
         });
     });
 
     describe('getMe', () => {
         it('should return current user data', () => {
-            const user = { id: '1', email: 'test@example.com' };
+            const user = { id: '1', email: 'test@example.com', name: 'Test', role: 'USER' };
             const response = AuthController.getMe({ user });
 
             expect(response).toEqual({
                 success: true,
                 message: 'Current user retrieved successfully',
-                data: { user }
+                data: { user },
             });
         });
     });

@@ -1,42 +1,45 @@
-import { AuthRepository } from './auth.repository';
+import { AuthRepository, type SafeUser } from './auth.repository';
+import { ConflictError, UnauthorizedError } from '../../lib/app-error';
+import type { LoginBody, RegisterBody } from './auth.model';
+
+export interface AuthenticatedUserWithPassword extends SafeUser {
+    password: string;
+    updatedAt: Date;
+}
 
 export class AuthService {
-    constructor(private authRepository: AuthRepository) { }
+    constructor(private authRepository: AuthRepository) {}
 
-    async register(body: any) {
+    async register(body: RegisterBody): Promise<SafeUser> {
         const { email, password, name } = body;
 
         const existingUser = await this.authRepository.findByEmail(email);
         if (existingUser) {
-            return { error: 'EMAIL_ALREADY_EXISTS', user: null };
+            throw new ConflictError('Email already exists');
         }
 
-        // Hash password using Bun's native API (Argon2 instance in Bun > 1.0.21)
         const hashedPassword = await Bun.password.hash(password);
 
-        const newUser = await this.authRepository.createUser({
+        return this.authRepository.createUser({
             email,
             password: hashedPassword,
-            name,
+            name: name ?? null,
         });
-
-        return { error: null, user: newUser };
     }
 
-    async login(body: any) {
+    async login(body: LoginBody): Promise<AuthenticatedUserWithPassword> {
         const { email, password } = body;
 
         const user = await this.authRepository.findByEmail(email);
         if (!user) {
-            return { error: 'INVALID_CREDENTIALS', user: null };
+            throw new UnauthorizedError('Invalid credentials');
         }
 
-        // Verify password with Bun's native API
         const isPasswordValid = await Bun.password.verify(password, user.password);
         if (!isPasswordValid) {
-            return { error: 'INVALID_CREDENTIALS', user: null };
+            throw new UnauthorizedError('Invalid credentials');
         }
 
-        return { error: null, user };
+        return user;
     }
 }

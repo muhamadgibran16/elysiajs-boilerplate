@@ -3,6 +3,6 @@ export const ENV = {
 		process.env.DATABASE_URL ||
 		"postgresql://user:password@localhost:5432/elysia_db?schema=public",
 	JWT_SECRET: process.env.JWT_SECRET || "super-secret-key-change-me",
-	PORT: parseInt(process.env.PORT || "3000", 10),
+	PORT: Number(process.env.PORT || 8080),
 	NODE_ENV: process.env.NODE_ENV || "development",
 };
