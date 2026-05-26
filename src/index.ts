@@ -1,14 +1,16 @@
 import { Elysia } from "elysia";
 import { swagger } from "@elysiajs/swagger";
 import { securityPlugin } from "./plugins/security";
+import { loggerPlugin } from "./plugins/logger";
 import { authRoutes } from "./modules/auth";
 import { userRoutes } from "./modules/users";
 import { errorResponse } from "./lib/response";
 import { AppError } from "./lib/app-error";
-import { ENV } from "./config/env-loader";
+import { env } from "./config/env-loader";
 
 const app = new Elysia()
   // 1. Plugins
+  .use(loggerPlugin)
   .use(
     swagger({
       documentation: {
@@ -67,7 +69,7 @@ const app = new Elysia()
     .use(userRoutes)
   )
 
-  .listen(ENV.PORT);
+  .listen(env.app.port);
 
 console.log(
   `🦊 Elysia is running at ${app.server?.hostname}:${app.server?.port}`
