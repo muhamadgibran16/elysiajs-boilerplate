@@ -1,7 +1,7 @@
 import { Elysia } from 'elysia';
 import { jwt } from '@elysiajs/jwt';
 import { prisma } from '../lib/prisma';
-import { ENV } from '../config/env-loader';
+import { env } from '../config/env-loader';
 import { UnauthorizedError } from '../lib/app-error';
 
 export interface AuthenticatedUser {
@@ -15,7 +15,7 @@ export const authMiddleware = new Elysia({ name: 'auth-middleware' })
     .use(
         jwt({
             name: 'jwt',
-            secret: ENV.JWT_SECRET,
+            secret: env.jwt.secret,
         }),
     )
     .derive({ as: 'scoped' }, async ({ jwt, headers }): Promise<{ user: AuthenticatedUser | null }> => {

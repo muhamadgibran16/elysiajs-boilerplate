@@ -83,3 +83,6 @@ This boilerplate comes with a built-in `request-guard.ts` plugin that automatica
 8. Blocked HTTP Methods (`TRACE`, `CONNECT`)
 
 *Note: The Request Body scanner intentionally skips XSS checks to accommodate legitimate rich-text/HTML inputs from clients.*
+
+## 👤 Author
+- **Muhamad Gibran** - [GitHub](https://github.com/muhamadgibran16)
