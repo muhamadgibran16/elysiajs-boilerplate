@@ -2,7 +2,7 @@ import { successResponse } from '../../lib/response';
 import { AuthService } from './auth.service';
 import { AuthRepository } from './auth.repository';
 import type { RegisterBody, LoginBody } from './auth.model';
-import type { AuthenticatedUser } from '../../middlewares/auth.middleware';
+import type { AuthenticatedUser } from '../../plugins/auth';
 
 const authService = new AuthService(new AuthRepository());
 

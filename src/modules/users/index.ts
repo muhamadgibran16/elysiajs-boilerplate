@@ -1,5 +1,5 @@
 import { Elysia } from 'elysia';
-import { requireAuth } from '../../middlewares/auth.middleware';
+import { requireAuth } from '../../plugins/auth';
 import { UsersController } from './users.controller';
 import { UsersModel } from './users.model';
 
